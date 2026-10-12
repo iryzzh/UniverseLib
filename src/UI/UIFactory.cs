@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -837,15 +837,19 @@ namespace UniverseLib.UI
             bgRect.offsetMax = new Vector2(0f, 0f);
 
             RectTransform handleSlideRect = handleSlideAreaObj.GetComponent<RectTransform>();
-            handleSlideRect.anchorMin = Vector3.zero;
-            handleSlideRect.anchorMax = Vector3.one;
-            handleSlideRect.pivot = new Vector3(0.5f, 0.5f);
+            handleSlideRect.anchorMin = Vector2.zero;
+            handleSlideRect.anchorMax = Vector2.one;
+            handleSlideRect.pivot = new Vector2(0.5f, 0.5f);
+            handleSlideRect.sizeDelta = Vector2.zero;
+            handleSlideRect.offsetMin = Vector2.zero;
+            handleSlideRect.offsetMax = Vector2.zero;
 
             Image handleImage = handleObj.AddComponent<Image>();
             handleImage.color = new Color(0.5f, 0.5f, 0.5f, 1.0f);
 
             RectTransform handleRect = handleObj.GetComponent<RectTransform>();
             handleRect.pivot = new Vector2(0.5f, 0.5f);
+            handleRect.sizeDelta = Vector2.zero;
             SetLayoutElement(handleObj, minWidth: 21, flexibleWidth: 0);
 
             LayoutElement sliderBarLayout = mainObj.AddComponent<LayoutElement>();

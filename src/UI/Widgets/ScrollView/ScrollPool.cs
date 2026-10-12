@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -105,6 +105,8 @@ namespace UniverseLib.UI.Widgets.ScrollView
         }
         private bool writingLocked;
         private float timeofLastWriteLock;
+        private float? pendingSliderValue;
+        private float lastSliderValue;
 
         /// <summary>
         /// Invoked by UIBehaviourModel.UpdateInstances
@@ -114,14 +116,23 @@ namespace UniverseLib.UI.Widgets.ScrollView
             if (!ScrollRect || DataSource == null)
                 return;
 
+            if (slider && slider.value != lastSliderValue)
+                OnSliderValueChanged(slider.value);
+
             if (writingLocked && timeofLastWriteLock.OccuredEarlierThanDefault())
                 writingLocked = false;
+
+            if (!WritingLocked && pendingSliderValue is float requestedValue)
+            {
+                pendingSliderValue = null;
+                OnSliderValueChanged(requestedValue);
+            }
 
             if (!writingLocked)
             {
                 bool viewChange = CheckRecycleViewBounds(true);
 
-                if (viewChange || Content.rect.height != prevContentHeight)
+                if (viewChange || Content.rect.height != prevContentHeight || Content.anchoredPosition != prevAnchoredPos)
                 {
                     prevContentHeight = Content.rect.height;
                     OnValueChangedListener(Vector2.zero);
@@ -141,6 +152,7 @@ namespace UniverseLib.UI.Widgets.ScrollView
         {
             if (jumpToTop)
             {
+                pendingSliderValue = null;
                 bottomDataIndex = CellPool.Count - 1;
                 Content.anchoredPosition = Vector2.zero;
             }
@@ -261,7 +273,7 @@ namespace UniverseLib.UI.Widgets.ScrollView
             if (extendPoolIfGrown && prevViewportHeight < Viewport.rect.height && prevViewportHeight != 0.0f)
                 CheckExtendCellPool();
 
-            bool ret = prevViewportHeight == Viewport.rect.height;
+            bool ret = prevViewportHeight != Viewport.rect.height;
             prevViewportHeight = Viewport.rect.height;
             return ret;
         }
@@ -587,10 +599,17 @@ namespace UniverseLib.UI.Widgets.ScrollView
 
         private void OnSliderValueChanged(float val)
         {
-            // Prevent spam invokes unless value is 0 or 1 (so we dont skip over the start/end)
-            if (DataSource == null || (WritingLocked && val != 0 && val != 1))
+            lastSliderValue = val;
+            if (DataSource == null || DataSource.ItemCount == 0)
                 return;
-            //this.WritingLocked = true;
+
+            if (WritingLocked)
+            {
+                pendingSliderValue = val;
+                return;
+            }
+
+            pendingSliderValue = null;
 
             ScrollRect.StopMovement();
             RefreshCellHeightsFast();
@@ -619,8 +638,6 @@ namespace UniverseLib.UI.Widgets.ScrollView
                 desiredAnchor = desiredMinY;
             else
                 desiredAnchor = desiredMinY - topStartPos;
-            Content.anchoredPosition = new Vector2(0, desiredAnchor);
-
             int desiredBottomIndex = poolStartIndex + CellPool.Count - 1;
 
             // check if our pool indices contain the desired index. If so, rotate and set
@@ -670,15 +687,20 @@ namespace UniverseLib.UI.Widgets.ScrollView
                 }
             }
 
+            // Rebinding cells can change the content height; commit layout before ScrollRect reads its bounds.
+            LayoutRebuilder.ForceRebuildLayoutImmediate(Content);
+            Content.anchoredPosition = new Vector2(0, desiredAnchor);
+            prevAnchoredPos = Content.anchoredPosition;
+
             CheckRecycleViewBounds(true);
 
             SetScrollBounds();
             ScrollRect.UpdatePrevData();
 
-            UpdateSliderHandle();
+            UpdateSliderHandle(false);
         }
 
-        private void UpdateSliderHandle()// bool forcePositionValue = true)
+        private void UpdateSliderHandle(bool setSliderValue = true)
         {
             CheckDataSourceCountChange(out _);
 
@@ -716,7 +738,11 @@ namespace UniverseLib.UI.Widgets.ScrollView
                     val = 0f;
             }
 
-            slider.Set(val, false);
+            if (setSliderValue && !pendingSliderValue.HasValue)
+            {
+                slider.Set(val, false);
+                lastSliderValue = slider.value;
+            }
         }
 
         /// <summary>Use <see cref="UIFactory.CreateScrollPool"/></summary>

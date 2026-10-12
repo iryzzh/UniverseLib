@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -51,11 +51,15 @@ namespace UniverseLib.UI.Widgets
         private float lastContentHeight;
         private float lastViewportHeight;
         private bool _refreshWanted;
+        private float lastSliderValue;
 
         public override void Update()
         {
             if (!Enabled)
                 return;
+
+            if (Slider.value != lastSliderValue)
+                OnSliderValueChanged(Slider.value);
 
             _refreshWanted = false;
             if (ContentRect.localPosition.y != lastAnchorPosition)
@@ -87,7 +91,8 @@ namespace UniverseLib.UI.Widgets
             if (totalHeight <= viewportHeight)
             {
                 Slider.handleRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 0f);
-                Slider.value = 0f;
+                Slider.Set(0f, false);
+                lastSliderValue = Slider.value;
                 Slider.interactable = false;
                 return;
             }
@@ -108,24 +113,57 @@ namespace UniverseLib.UI.Widgets
 
             float val = 0f;
             if (totalHeight > 0f)
-                val = (float)((decimal)ContentRect.localPosition.y / (decimal)(totalHeight - ViewportRect.rect.height));
+                val = (float)((decimal)ContentRect.anchoredPosition.y / (decimal)(totalHeight - ViewportRect.rect.height));
 
-            Slider.value = val;
+            Slider.Set(val, false);
+            lastSliderValue = Slider.value;
         }
+
+        private bool _isUpdatingValue;
+        private ScrollRect scrollRect;
 
         public void OnScrollbarValueChanged(float value)
         {
-            value = 1f - value;
-            if (this.Slider.value != value)
-                this.Slider.Set(value, false);
-            //OnValueChanged?.Invoke(value);
+            if (_isUpdatingValue)
+                return;
+
+            _isUpdatingValue = true;
+            try
+            {
+                value = 1f - value;
+                if (this.Slider.value != value)
+                    this.Slider.Set(value, false);
+                lastSliderValue = Slider.value;
+            }
+            finally
+            {
+                _isUpdatingValue = false;
+            }
         }
 
         public void OnSliderValueChanged(float value)
         {
-            value = 1f - value;
-            this.Scrollbar.value = value;
-            //OnValueChanged?.Invoke(value);
+            lastSliderValue = value;
+            if (_isUpdatingValue)
+                return;
+
+            _isUpdatingValue = true;
+            try
+            {
+                value = 1f - value;
+                scrollRect ??= ContentRect.GetComponentInParent<ScrollRect>();
+                if (scrollRect)
+                {
+                    scrollRect.StopMovement();
+                    scrollRect.verticalNormalizedPosition = value;
+                }
+                else
+                    this.Scrollbar.value = value;
+            }
+            finally
+            {
+                _isUpdatingValue = false;
+            }
         }
 
         public override void ConstructUI(GameObject parent)
