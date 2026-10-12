@@ -101,33 +101,23 @@ namespace UniverseLib.Runtime.Il2Cpp
         /// <inheritdoc/>
         protected internal override GameObject[] Internal_GetRootGameObjects(Scene scene)
         {
-            if (!scene.isLoaded || scene.handle == -1)
+            if (!scene.isLoaded || scene.handle.m_Value.m_Data == -1)
             {
                 return [];
             }
 
-            int count = GetRootCount(scene.handle);
-            if (count < 1)
-            {
-                return [];
-            }
-
-            Il2CppSystem.Collections.Generic.List<GameObject> list = new(count);
-            ICallManager.GetICall<d_GetRootGameObjects>("UnityEngine.SceneManagement.Scene::GetRootGameObjectsInternal")
-                .Invoke(scene.handle, list.Pointer);
-            return list.ToArray();
+            return scene.GetRootGameObjects().ToArray();
         }
 
         /// <inheritdoc/>
-        protected internal override int Internal_GetRootCount(Scene scene) => GetRootCount(scene.handle);
+        protected internal override int Internal_GetRootCount(Scene scene) => scene.rootCount;
 
         /// <summary>
         /// Gets the <see cref="Scene.rootCount"/> for the provided scene handle.
         /// </summary>
         protected internal static int GetRootCount(int sceneHandle)
         {
-            return ICallManager.GetICall<d_GetRootCountInternal>("UnityEngine.SceneManagement.Scene::GetRootCountInternal")
-                   .Invoke(sceneHandle);
+            return Scene.GetRootCountInternal(new SceneHandle { m_Value = new EntityId { m_Data = sceneHandle } });
         }
 
         /// <inheritdoc/>

@@ -906,9 +906,9 @@ public class Il2CppReflection : ReflectionUtility
 
     static IEnumerator<DictionaryEntry> EnumerateCppHashTable(Il2CppSystem.Collections.Hashtable hashtable)
     {
-        for (int i = 0; i < hashtable.buckets.Count; i++)
+        for (int i = 0; i < hashtable._buckets.Count; i++)
         {
-            Il2CppSystem.Collections.Hashtable.bucket bucket = hashtable.buckets[i];
+            Il2CppSystem.Collections.Hashtable.bucket bucket = hashtable._buckets[i];
             if (bucket == null || bucket.key == null)
             {
                 continue;

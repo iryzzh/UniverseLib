@@ -81,16 +81,7 @@ public class AssetBundle : UnityEngine.Object
     public static AssetBundle? LoadFromMemory(byte[] binary, uint crc = 0)
     {
         var il2cppArray = new Il2CppStructArray<byte>(binary);
-        var ptr = ICallManager.GetICallUnreliable<d_LoadFromMemory>(
-            "UnityEngine.AssetBundle::LoadFromMemory_Internal",
-            "UnityEngine.AssetBundle::LoadFromMemory")
-        ?.Invoke(il2cppArray.Pointer, crc);
-
-        if (ptr.HasValue && ptr.Value != IntPtr.Zero)
-        {
-            return new AssetBundle(ptr.Value);
-        }
-
+        // Unity 6.4's memory icall takes Span<byte>; use the verified stream ABI.
         Il2CppSystem.IO.MemoryStream il2CppStream = new();
         il2CppStream.Write(il2cppArray, 0, il2cppArray.Length);
         il2CppStream.Flush();
@@ -101,7 +92,7 @@ public class AssetBundle : UnityEngine.Object
             "UnityEngine.AssetBundle::ValidateLoadFromStream"
             )?.Invoke(streamPtr);
 
-        ptr = ICallManager.GetICallUnreliable<d_LoadFromStream>(
+        var ptr = ICallManager.GetICallUnreliable<d_LoadFromStream>(
                 "UnityEngine.AssetBundle::LoadFromStreamInternal",
                 "UnityEngine.AssetBundle::LoadFromStream")
             ?.Invoke(streamPtr, crc, 0);

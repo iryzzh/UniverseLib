@@ -47,7 +47,7 @@ public static class Universe
     /// <summary>The current setup state of UniverseLib.</summary>
     public static GlobalState CurrentGlobalState { get; private set; }
 
-    internal static Harmony Harmony { get; } = new Harmony(GUID);
+    internal static HarmonyLib.Harmony Harmony { get; } = new HarmonyLib.Harmony(GUID);
 
     static float startupDelay;
     static event Action OnInitialized;

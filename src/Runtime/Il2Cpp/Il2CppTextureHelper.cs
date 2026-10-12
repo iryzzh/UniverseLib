@@ -29,12 +29,12 @@ namespace UniverseLib.Runtime.Il2Cpp
 
         protected internal override Texture2D Internal_NewTexture2D(int width, int height)
         {
-            return new(width, height, TextureFormat.RGBA32, 1, false, IntPtr.Zero);
+            return new(width, height, TextureFormat.RGBA32, 1, false);
         }
 
         protected internal override Texture2D Internal_NewTexture2D(int width, int height, TextureFormat textureFormat, bool mipChain)
         {
-            return new(width, height, textureFormat, mipChain ? -1 : 1, false, IntPtr.Zero);
+            return new(width, height, textureFormat, mipChain ? -1 : 1, false);
         }
 
         protected internal override void Internal_Blit(Texture tex, RenderTexture rt)
